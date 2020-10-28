@@ -1,32 +1,41 @@
+/* eslint-disable prettier/prettier */
 import { Header, Nav, Main, Footer } from "./components";
 import * as state from "./store";
 import Navigo from "navigo";
-import { capitalize } from "lodash";
 import axios from "axios";
+import { default as Modal } from "./components/Modal/Modal";
 
 const router = new Navigo(window.location.origin);
-
 router
   .on({
-    ":page": params => render(state[capitalize(params.page)]),
-    "/": () => render(state.Home)
+    ":page": (params) => {
+      render(state[params.page]);
+    },
+    "/": () => render(state.Home),
   })
   .resolve();
 
 axios
+  .get("https://swapi.dev/api/people/")
+  .then((response) => {
+    response.data.results.forEach((char) => {
+      state.Bio.listOfSWChars.push(char);
+    });
+  })
+  .catch((err) => console.log(err));
+
+axios
   .get("https://jsonplaceholder.typicode.com/posts")
-  .then(response => {
-    console.log("response.data", response.data);
-    response.data.forEach(post => {
+  .then((response) => {
+    response.data.forEach((post) => {
       state.Blog.posts.push(post);
     });
     const params = router.lastRouteResolved().params;
-    console.log(params);
     if (params) {
       render(state[params.page]);
     }
   })
-  .catch(err => console.log(err));
+  .catch((err) => console.log(err));
 
 function render(st = state.Home) {
   // console.log("rendering state", st);
@@ -39,7 +48,15 @@ function render(st = state.Home) {
 `;
 
   router.updatePageLinks();
-
+  if (st === state.Home || st === state.Blog) {
+    const button = document.querySelectorAll(".modal"); // gets all buttons with class modal
+    button.forEach((curr) => { // looping through and adding my event listener
+      curr.addEventListener("click", (e) => {
+        e.preventDefault(); // prevents default A tag reaction
+        Modal(state, e.target.name); // this name is part of the actual A tag in Home.js and im passing state so i have access to the different modal "types" in the modal state
+      });
+    });
+  }
   addNavEventListeners();
   addPicOnFormSubmit(st);
 }
@@ -55,7 +72,7 @@ function addNavEventListeners() {
 
 function addPicOnFormSubmit(st) {
   if (st.view === "Form") {
-    document.querySelector("form").addEventListener("submit", event => {
+    document.querySelector("form").addEventListener("submit", (event) => {
       event.preventDefault();
       // convert HTML elements to Array
       let inputList = Array.from(event.target.elements);

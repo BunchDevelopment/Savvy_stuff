@@ -4,6 +4,7 @@ export default st => {
   console.log("piece of state", st);
   return `
 <section id="blog">
+<a href="" id="modal" class="modal" name="JD">"Call to Action" "Button"</a>
   ${st.posts.map(post => formatBlogPost(post)).join("")}
 </section>
 `;
